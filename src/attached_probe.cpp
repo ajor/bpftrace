@@ -9,6 +9,7 @@
 #include "common.h"
 #include "libbpf.h"
 #include <linux/perf_event.h>
+#include <linux/version.h>
 
 namespace bpftrace {
 
@@ -150,11 +151,7 @@ uint64_t AttachedProbe::offset() const
 
 static unsigned kernel_version()
 {
-  struct utsname utsname;
-  uname(&utsname);
-  unsigned x, y, z;
-  sscanf(utsname.release, "%d.%d.%d", &x, &y, &z);
-  return (x << 16) + (y << 8) + z;
+  return LINUX_VERSION_CODE;
 }
 
 void AttachedProbe::load_prog()
