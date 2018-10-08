@@ -1,4 +1,8 @@
-[![Build Status](https://travis-ci.org/ajor/bpftrace.svg?branch=master)](https://travis-ci.org/ajor/bpftrace)
+# New repository https://github.com/iovisor/bpftrace
+
+Development of BPFtrace has moved to https://github.com/iovisor/bpftrace
+
+This repository will no longer be updated.
 
 # BPFtrace
 
