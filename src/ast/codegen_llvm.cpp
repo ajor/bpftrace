@@ -831,6 +831,39 @@ void CodegenLLVM::visit(Unop &unop)
       case bpftrace::Parser::token::LNOT: expr_ = b_.CreateNot(expr_); break;
       case bpftrace::Parser::token::BNOT: expr_ = b_.CreateNeg(expr_); break;
       case bpftrace::Parser::token::MINUS: expr_ = b_.CreateNeg(expr_); break;
+      case bpftrace::Parser::token::PLUSPLUS:
+      {
+        if (unop.expr->is_map)
+        {
+          Map &map = static_cast<Map&>(*unop.expr);
+          AllocaInst *key = getMapKey(map);
+          Value *oldval = b_.CreateMapLookupElem(map, key);
+          AllocaInst *newval = b_.CreateAllocaBPF(map.type, map.ident + "_newval");
+          b_.CreateStore(b_.CreateAdd(oldval, b_.getInt64(1)), newval);
+          b_.CreateMapUpdateElem(map, key, newval);
+          b_.CreateLifetimeEnd(key);
+
+          if (unop.is_post_op)
+            expr_ = oldval;
+          else
+            expr_ = b_.CreateLoad(newval);
+          b_.CreateLifetimeEnd(newval);
+        }
+        else if (unop.expr->is_map)
+        {
+          abort();
+        }
+        else
+        {
+          std::cerr << "invalid expression passed to " << opstr(unop) << std::endl;
+          abort();
+        }
+        break;
+      }
+      case bpftrace::Parser::token::MINUSMINUS:
+      {
+        break;
+      }
       case bpftrace::Parser::token::MUL:
       {
         int size = type.size;
@@ -846,7 +879,7 @@ void CodegenLLVM::visit(Unop &unop)
         break;
       }
       default:
-        std::cerr << "missing codegen to union expression type" << std::endl;
+        std::cerr << "missing codegen for unary operator " << opstr(unop) << std::endl;
         abort();
     }
   }
@@ -856,7 +889,7 @@ void CodegenLLVM::visit(Unop &unop)
   }
   else
   {
-    std::cerr << "missing codegen to union operator \"" << opstr(unop) << "\"" << std::endl;
+    std::cerr << "invalid type (" << type << ") passed to unary operator \"" << opstr(unop) << "\"" << std::endl;
     abort();
   }
 }
